@@ -1,0 +1,5 @@
+# Paths exempt from the TTR_PLAYCOOKIE value check only (the size, game-file
+# and launcher checks still apply). Each entry needs a reason.
+#
+# The Phase 0 brief quotes the dummy value used to prove the check works.
+prompts/phase-00-workspace-and-repo.md
