@@ -1,0 +1,42 @@
+# ---- Game files: never in the repository (CLAUDE.md rule 1) ----
+TTREngine*
+*.mf
+phase_*.mf
+/game/
+**/ttr-game/
+
+# ---- Launcher state (holds account data) ----
+launcher.json
+
+# ---- Images and runtime output ----
+*.ext4
+*.img
+logs/
+cache/
+ref/
+
+# ---- Build output ----
+/build/
+**/build/
+*.nro
+*.nacp
+*.nso
+*.nsp
+*.elf
+*.o
+*.d
+*.map
+*.lst
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# ---- Reference clones, read-only, fetched by tools/fetch-reference.sh ----
+/third_party/reference/
+
+# ---- Local editor and OS files ----
+.DS_Store
+*.swp
+.idea/
+.vscode/
