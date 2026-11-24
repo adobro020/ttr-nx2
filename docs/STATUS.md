@@ -19,7 +19,7 @@ Last updated: 2026-11-24 (Phase 0).
 
 | Phase | Title | State | Notes |
 |---|---|---|---|
-| 0 | Workspace, toolchain and repository | **in progress** — local work done; GitHub steps await the human | see below |
+| 0 | Workspace, toolchain and repository | **done** (2026-11-24) | merged in adobro020/ttr-nx2#1; see below |
 | 1 | Hardware probes (G3) | not started | |
 | 2 | Reference baselines (G1, G2) | not started | do early: G1 can end the project |
 | 3 | gx runtime | not started | |
@@ -37,14 +37,21 @@ Last updated: 2026-11-24 (Phase 0).
 
 | Criterion | State | Evidence |
 |---|---|---|
-| `make doctor` exits 0 on this Mac | **done** | exit 0, "all requirements met, 1 warning(s)" (disk); output in the Phase 0 PR |
+| `make doctor` exits 0 on this Mac | **done** | exit 0, "all requirements met, 1 warning(s)" (disk); output in adobro020/ttr-nx2#1 |
 | fresh `git clone --recurse-submodules` + `make hello` → `build/hello.nro` with `NRO0` at 0x10 | **done locally** | clone of this repository (submodules fetched from GitHub) into `build/fresh-clone`, devkit image rebuilt with `--no-cache`; `00000010: 4e52 4f30 0000 0000 0030 0400 0000 0000  NRO0.....0......`; NRO SHA-256 `bac21a921412427f6f331e4551315094399fa28efe6ca873ef1638fdabb8b2ad`, identical to the first build |
-| Same build passes in GitHub Actions | pending | repository exists; CI runs on a pull request into `main` (not opened yet) |
-| Dummy `TTREngine` commit rejected by hook and CI | hook **done**; CI checks **done locally**; CI run pending human | throwaway branch (deleted): hook `FAIL game-file: TTREngine`; after `--no-verify`, `check.py --history HEAD` exit 1. Needs a CI run after push |
-| `TTR_PLAYCOOKIE=<value>` line rejected by hook and CI | hook **done**; CI checks **done locally**; CI run pending human | hook `FAIL play-cookie: demo-cookie.env:1`; after `--no-verify`, history check and `gitleaks git` ("leaks found: 1") exit 1 |
+| Same build passes in GitHub Actions | **done** | PR #1 run https://github.com/adobro020/ttr-nx2/actions/runs/45339233652 (both jobs pass; `hello-nro` artifact uploaded); `main` after merge: https://github.com/adobro020/ttr-nx2/actions/runs/45340795984 (success) |
+| Dummy `TTREngine` commit rejected by hook and CI | **done** | hook, on a local throwaway branch (deleted): `FAIL game-file: TTREngine`. CI: draft adobro020/ttr-nx2#2 (committed with `--no-verify`), job https://github.com/adobro020/ttr-nx2/actions/runs/45341621350/job/138266366932 failed at "Guard rails (tree at HEAD)": `guardrails: FAIL game-file: TTREngine (index) matches a TTR game file pattern`. PR closed unmerged, branch deleted |
+| `TTR_PLAYCOOKIE=<value>` line rejected by hook and CI | **done** | hook: `FAIL play-cookie: demo-cookie.env:1`. CI: draft adobro020/ttr-nx2#3 (`--no-verify`), job https://github.com/adobro020/ttr-nx2/actions/runs/45341619156/job/138266359494 failed at "Guard rails (tree at HEAD)": `guardrails: FAIL play-cookie: demo-cookie.env:1 (index) assigns a value to TTR_PLAYCOOKIE` (value not printed). PR closed unmerged, branch deleted. The dummy value stays visible in the closed PR's history; it was never a real cookie |
 | `docs/upstream-notes.md` lists hash + licence for every upstream; matches `git submodule status` | **done** | `af80b26…` launcher (4.0), `2f130fa…` box64 (v0.4.4), `8652bc7…` chromium-nx (v0.2.0) in both |
 | `docs/dev-setup-macos.md` names every installed tool and version | **done** | |
 | Repository is private (`gh repo view --json visibility`) | superseded | the human decided on 2026-11-24 to make it public (G8). https://github.com/adobro020/ttr-nx2 → `{"defaultBranchRef":{"name":"main"},"visibility":"PUBLIC"}`; labels and 13 milestones created |
+
+Branch protection on `main` (2026-11-24, at the human's request): both CI
+jobs required, branch must be up to date, force-pushes and deletion blocked,
+admins can override (`enforce_admins` off). Read back with
+`gh api repos/adobro020/ttr-nx2/branches/main/protection`. If a CI job is
+renamed or a required job added, update `tools/github/setup-project.sh
+protect` and re-run it in the same PR.
 
 No hardware is needed for Phase 0. Optional smoke test: copy
 `build/hello.nro` to `sdmc:/switch/` and start it from hbmenu (not done).
