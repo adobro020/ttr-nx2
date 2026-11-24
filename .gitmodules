@@ -1,0 +1,9 @@
+[submodule "third_party/chromium-nx"]
+	path = third_party/chromium-nx
+	url = https://github.com/shodowlo/chromium-nx
+[submodule "third_party/box64"]
+	path = third_party/box64
+	url = https://github.com/ptitSeb/box64
+[submodule "third_party/Simple-TTR-Launcher"]
+	path = third_party/Simple-TTR-Launcher
+	url = https://github.com/mike406/Simple-TTR-Launcher

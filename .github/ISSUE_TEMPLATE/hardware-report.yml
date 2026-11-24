@@ -1,0 +1,56 @@
+name: Hardware report
+description: Results from running a TTR NX2 build on a Switch 2 under kaiHEN.
+labels: ["hardware-needed"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Follow the phase checklist in `docs/hardware/phase-NN-checklist.md`.
+        **Never paste passwords, ToonGuard or 2FA codes, tokens or a
+        `TTR_PLAYCOOKIE` value.** Attach the files from `make logs IP=…`.
+        Reminder: do not update the console's firmware without checking
+        kaiHEN's supported versions.
+  - type: input
+    id: commit
+    attributes:
+      label: Build commit
+      description: Shown on the app's first screen and in the log header.
+    validations:
+      required: true
+  - type: input
+    id: phase
+    attributes:
+      label: Checklist followed
+      placeholder: docs/hardware/phase-01-checklist.md
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Console firmware version
+    validations:
+      required: true
+  - type: input
+    id: kaihen
+    attributes:
+      label: kaiHEN version
+      placeholder: "20261117.1"
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Console mode
+      options: [handheld, docked]
+  - type: textarea
+    id: results
+    attributes:
+      label: Results per checklist step
+      description: Step number, what you saw, pass or fail.
+    validations:
+      required: true
+  - type: textarea
+    id: last-breadcrumb
+    attributes:
+      label: Last breadcrumb in the log (if the app stopped)
+      render: text

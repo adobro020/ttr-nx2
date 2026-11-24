@@ -1,0 +1,16 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
+# Guard rails on every commit (CLAUDE.md rules 1, 3, 4). Installed by
+# `make hooks` (git config core.hooksPath .githooks). CI runs the same checks,
+# so bypassing this hook only moves the failure to the pull request.
+set -eu
+root=$(git rev-parse --show-toplevel)
+
+python3 "$root/tools/guardrails/check.py" --staged --repo "$root"
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+    echo "pre-commit: gitleaks is not installed (brew install gitleaks); refusing to commit unscanned" >&2
+    exit 1
+fi
+gitleaks git --pre-commit --staged --redact --no-banner --log-level warn \
+    --config "$root/.gitleaks.toml" "$root"
