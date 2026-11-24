@@ -39,12 +39,12 @@ Last updated: 2026-11-24 (Phase 0).
 |---|---|---|
 | `make doctor` exits 0 on this Mac | **done** | exit 0, "all requirements met, 1 warning(s)" (disk); output in the Phase 0 PR |
 | fresh `git clone --recurse-submodules` + `make hello` → `build/hello.nro` with `NRO0` at 0x10 | **done locally** | clone of this repository (submodules fetched from GitHub) into `build/fresh-clone`, devkit image rebuilt with `--no-cache`; `00000010: 4e52 4f30 0000 0000 0030 0400 0000 0000  NRO0.....0......`; NRO SHA-256 `bac21a921412427f6f331e4551315094399fa28efe6ca873ef1638fdabb8b2ad`, identical to the first build |
-| Same build passes in GitHub Actions | pending human | needs the GitHub repository (approval) |
+| Same build passes in GitHub Actions | pending | repository exists; CI runs on a pull request into `main` (not opened yet) |
 | Dummy `TTREngine` commit rejected by hook and CI | hook **done**; CI checks **done locally**; CI run pending human | throwaway branch (deleted): hook `FAIL game-file: TTREngine`; after `--no-verify`, `check.py --history HEAD` exit 1. Needs a CI run after push |
 | `TTR_PLAYCOOKIE=<value>` line rejected by hook and CI | hook **done**; CI checks **done locally**; CI run pending human | hook `FAIL play-cookie: demo-cookie.env:1`; after `--no-verify`, history check and `gitleaks git` ("leaks found: 1") exit 1 |
 | `docs/upstream-notes.md` lists hash + licence for every upstream; matches `git submodule status` | **done** | `af80b26…` launcher (4.0), `2f130fa…` box64 (v0.4.4), `8652bc7…` chromium-nx (v0.2.0) in both |
 | `docs/dev-setup-macos.md` names every installed tool and version | **done** | |
-| Repository is private (`gh repo view --json visibility`) | superseded | the human decided on 2026-11-24 to make it public (G8); expect `"visibility":"PUBLIC"` |
+| Repository is private (`gh repo view --json visibility`) | superseded | the human decided on 2026-11-24 to make it public (G8). https://github.com/adobro020/ttr-nx2 → `{"defaultBranchRef":{"name":"main"},"visibility":"PUBLIC"}`; labels and 13 milestones created |
 
 No hardware is needed for Phase 0. Optional smoke test: copy
 `build/hello.nro` to `sdmc:/switch/` and start it from hbmenu (not done).
