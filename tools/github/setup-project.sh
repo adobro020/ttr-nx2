@@ -4,7 +4,7 @@
 # Configures the GitHub project for TTR NX2. Every step is outward-facing, so
 # each runs only when named on the command line, after the human approved it
 # (CLAUDE.md rule 10):
-#   tools/github/setup-project.sh create      private repo + push main
+#   tools/github/setup-project.sh create      repo (public; VISIBILITY=private) + push
 #   tools/github/setup-project.sh labels      phase-NN, gate, hardware-needed, ...
 #   tools/github/setup-project.sh milestones  one per phase
 #   tools/github/setup-project.sh protect     protect main, require CI
@@ -31,11 +31,19 @@ phases=(
 )
 
 create() {
-    # --private is not optional: the repository stays private until gate G8.
-    gh repo create "$repo" --private --source "$root" --remote origin \
-        --description "Unofficial: Toontown Rewritten on Switch 2 under kaiHEN (not affiliated with Nintendo, Disney or TTR)" \
-        --push
-    gh repo view "$repo" --json visibility
+    # Visibility is the human's decision (gate G8). The human chose public on
+    # 2026-11-24 (docs/STATUS.md); VISIBILITY=private still works.
+    local visibility=${VISIBILITY:-public}
+    case "$visibility" in
+    public | private) ;;
+    *) echo "VISIBILITY must be public or private" >&2; exit 2 ;;
+    esac
+    gh repo create "$repo" "--$visibility" --source "$root" --remote origin \
+        --description "Unofficial: Toontown Rewritten on Switch 2 under kaiHEN (not affiliated with Nintendo, Disney or TTR)"
+    # Push main first so it becomes the default branch, then the phase branch.
+    git -C "$root" push -u origin main
+    git -C "$root" push -u origin "$(git -C "$root" branch --show-current)"
+    gh repo view "$repo" --json visibility,defaultBranchRef
 }
 
 labels() {

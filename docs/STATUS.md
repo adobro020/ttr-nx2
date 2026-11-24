@@ -13,7 +13,7 @@ Last updated: 2026-11-24 (Phase 0).
 | G5 | Box64 interpreter runs real x86-64 programs on gx with no signals? | Phase 7 | open | — |
 | G6 | Staged-JIT dynarec passes Box64's tests and gives ≥ 10× the interpreter? | Phase 10 | open | — |
 | G7 | Game playable at Phase 11 frame-rate targets? | Phase 11 | open | — |
-| G8 | Public release acceptable to the TTR team's rules? | before Phase 12 (human) | open | — |
+| G8 | Public release acceptable to the TTR team's rules? | before Phase 12 (human) | open (partly decided) | 2026-11-24: the human chose to make the **repository public** now. Whether a public *release* is acceptable to the TTR team is still open and still needed before Phase 12. |
 
 ## Phases
 
@@ -44,7 +44,7 @@ Last updated: 2026-11-24 (Phase 0).
 | `TTR_PLAYCOOKIE=<value>` line rejected by hook and CI | hook **done**; CI checks **done locally**; CI run pending human | hook `FAIL play-cookie: demo-cookie.env:1`; after `--no-verify`, history check and `gitleaks git` ("leaks found: 1") exit 1 |
 | `docs/upstream-notes.md` lists hash + licence for every upstream; matches `git submodule status` | **done** | `af80b26…` launcher (4.0), `2f130fa…` box64 (v0.4.4), `8652bc7…` chromium-nx (v0.2.0) in both |
 | `docs/dev-setup-macos.md` names every installed tool and version | **done** | |
-| Repository is private (`gh repo view --json visibility`) | pending human | `gh` not logged in; repository not created |
+| Repository is private (`gh repo view --json visibility`) | superseded | the human decided on 2026-11-24 to make it public (G8); expect `"visibility":"PUBLIC"` |
 
 No hardware is needed for Phase 0. Optional smoke test: copy
 `build/hello.nro` to `sdmc:/switch/` and start it from hbmenu (not done).
@@ -63,15 +63,14 @@ No hardware is needed for Phase 0. Optional smoke test: copy
    Phase 0 fits. Phases 3–4 likely will not. Free space or move the
    Colima VM disk to an external drive before Phase 3. `make doctor` warns
    below 40 GB and fails below 10 GB.
-2. **GitHub plan and private repositories.** On a free personal account,
-   branch protection (and rulesets) are not enforced on private
-   repositories, and GitHub's arm64 Linux runners are free only for public
-   repositories (as far as I know; check your plan). Options: GitHub Pro / Team; keep "protected main" as
-   convention plus required CI by habit; or a self-hosted arm64 runner
-   (this Mac) for bench jobs later. Your decision.
-3. **GitHub setup approval.** Not done, because each step is outward-facing:
-   `gh auth login` (you), then `tools/github/setup-project.sh create labels
-   milestones protect`. The repository is created `--private`.
+2. **Repository visibility (decided).** Public, by the human's decision on
+   2026-11-24. On a public repository branch protection is enforced on the
+   free plan and GitHub's arm64 runners are free, which settles the earlier
+   plan question. Commits use a GitHub noreply author address. Labels and
+   milestones requested; branch protection on `main` not yet requested.
+3. **TTR team.** The repository being public does not answer whether TTR
+   accepts a public release (G8). Contacting them before Phase 12 remains
+   the human's call.
 4. **Launcher pin.** Pinned to release 4.0; `master` is 5 commits ahead
    (progress display and formatting). Stay on the release or move to
    `master`? Recommendation: stay on 4.0 until Phase 2's contract tests.
