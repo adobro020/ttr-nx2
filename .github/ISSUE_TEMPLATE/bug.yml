@@ -1,0 +1,53 @@
+name: Bug
+description: Something in TTR NX2 behaves wrongly on the Mac, the bench or CI.
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste passwords, ToonGuard or 2FA codes, queue tokens, auth
+        tokens or a `TTR_PLAYCOOKIE` value.** A leaked play cookie is a leaked
+        account. Logs from this project redact them; check before pasting.
+        For results from the console, use the "Hardware report" template.
+  - type: input
+    id: commit
+    attributes:
+      label: Commit
+      description: Output of `git rev-parse --short HEAD`
+    validations:
+      required: true
+  - type: dropdown
+    id: tier
+    attributes:
+      label: Test tier
+      options:
+        - unit tests (macOS)
+        - PC bench
+        - bench, nx2-like mode
+        - CI
+    validations:
+      required: true
+  - type: input
+    id: phase
+    attributes:
+      label: Phase
+      placeholder: phase-03
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Exact commands.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log lines
+      render: text
