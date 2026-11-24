@@ -38,11 +38,11 @@ Last updated: 2026-11-24 (Phase 0).
 | Criterion | State | Evidence |
 |---|---|---|
 | `make doctor` exits 0 on this Mac | **done** | exit 0, "all requirements met, 1 warning(s)" (disk); output in the Phase 0 PR |
-| fresh `git clone --recurse-submodules` + `make hello` → `build/hello.nro` with `NRO0` at 0x10 | **done locally** | clone of the local repository into the scratch area; `00000010: 4e52 4f30 …  NRO0…` |
+| fresh `git clone --recurse-submodules` + `make hello` → `build/hello.nro` with `NRO0` at 0x10 | **done locally** | clone of this repository (submodules fetched from GitHub) into `build/fresh-clone`, devkit image rebuilt with `--no-cache`; `00000010: 4e52 4f30 0000 0000 0030 0400 0000 0000  NRO0.....0......`; NRO SHA-256 `bac21a921412427f6f331e4551315094399fa28efe6ca873ef1638fdabb8b2ad`, identical to the first build |
 | Same build passes in GitHub Actions | pending human | needs the GitHub repository (approval) |
-| Dummy `TTREngine` commit rejected by hook and CI | hook **done**; CI pending human | hook output in the Phase 0 PR; CI after push |
-| `TTR_PLAYCOOKIE=<value>` line rejected by hook and CI | hook **done**; CI pending human | as above |
-| `docs/upstream-notes.md` lists hash + licence for every upstream; matches `git submodule status` | **done** | see `docs/upstream-notes.md` |
+| Dummy `TTREngine` commit rejected by hook and CI | hook **done**; CI checks **done locally**; CI run pending human | throwaway branch (deleted): hook `FAIL game-file: TTREngine`; after `--no-verify`, `check.py --history HEAD` exit 1. Needs a CI run after push |
+| `TTR_PLAYCOOKIE=<value>` line rejected by hook and CI | hook **done**; CI checks **done locally**; CI run pending human | hook `FAIL play-cookie: demo-cookie.env:1`; after `--no-verify`, history check and `gitleaks git` ("leaks found: 1") exit 1 |
+| `docs/upstream-notes.md` lists hash + licence for every upstream; matches `git submodule status` | **done** | `af80b26…` launcher (4.0), `2f130fa…` box64 (v0.4.4), `8652bc7…` chromium-nx (v0.2.0) in both |
 | `docs/dev-setup-macos.md` names every installed tool and version | **done** | |
 | Repository is private (`gh repo view --json visibility`) | pending human | `gh` not logged in; repository not created |
 
@@ -58,7 +58,7 @@ No hardware is needed for Phase 0. Optional smoke test: copy
 
 ## Open questions (for the human)
 
-1. **Disk space.** The Mac has ~15–17 GB free; the plan budgets 40 GB (LKL
+1. **Disk space.** The Mac has ~14–17 GB free (14 GB after Phase 0's images); the plan budgets 40 GB (LKL
    build trees, rootfs images, Box64 builds, three container images).
    Phase 0 fits. Phases 3–4 likely will not. Free space or move the
    Colima VM disk to an external drive before Phase 3. `make doctor` warns
@@ -66,7 +66,7 @@ No hardware is needed for Phase 0. Optional smoke test: copy
 2. **GitHub plan and private repositories.** On a free personal account,
    branch protection (and rulesets) are not enforced on private
    repositories, and GitHub's arm64 Linux runners are free only for public
-   repositories. Options: GitHub Pro / Team; keep "protected main" as
+   repositories (as far as I know; check your plan). Options: GitHub Pro / Team; keep "protected main" as
    convention plus required CI by habit; or a self-hosted arm64 runner
    (this Mac) for bench jobs later. Your decision.
 3. **GitHub setup approval.** Not done, because each step is outward-facing:
