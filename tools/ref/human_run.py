@@ -88,6 +88,17 @@ def main() -> int:
     parser.add_argument("--strace", action="store_true",
                         help="run the engine under strace -f -c (syscall counts only)")
     args = parser.parse_args()
+    if args.strace:
+        # strace traces the engine, so its one ptrace(PTRACE_TRACEME) fails
+        # and it exits with status 1 (observed in the first human run).
+        # The offline runs answered that call with strace fault injection;
+        # doing that while logged in to TTR's live servers would mean
+        # defeating their anti-debugging check, which is the open decision
+        # in docs/STATUS.md question 6. So logged-in runs never use strace.
+        print("human-run: --strace is not available for logged-in runs: the "
+              "engine refuses to run under a tracer (docs/recon/human-run.md)",
+              file=sys.stderr)
+        return 2
 
     out = ROOT / "build" / "human-run" / args.mode
     shutil.rmtree(out, ignore_errors=True)
