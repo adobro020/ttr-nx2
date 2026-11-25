@@ -7,7 +7,7 @@ Last updated: 2026-11-24 (Phase 2).
 | Gate | Question | Decided in | State | Evidence |
 |---|---|---|---|---|
 | G1 | TTREngine loadable at an arbitrary high address (PIE, no low-4 GB dependence)? | Phase 2 | **passed** (2026-11-24) | `readelf -h`: `Type: DYN (Position-Independent Executable file)`; `readelf -l`: first `LOAD` at `0x0000000000000000`, `FLAGS_1: PIE`, relocations only `RELATIVE`/`GLOB_DAT`/`64`/`JUMP_SLOT`, no `TEXTREL`; no `MAP_32BIT` in the start-up syscall trace; stock Box64 maps it at `0x100000000` and it runs. `docs/recon/engine-91bff107.md` §2 |
-| G2 | Unmodified TTREngine runs under stock Box64 on ARM64 Linux? | Phase 2 | **passed to the title screen; logged-in part pending human run** | offline (network off, placeholder cookie): window, GLX context, OpenAL, fonts, title screen at ~68 fps (llvmpipe) with the dynarec. Toon selection needs the human's login: `docs/recon/human-run.md`. `docs/recon/engine-91bff107.md` §3–4 |
+| G2 | Unmodified TTREngine runs under stock Box64 on ARM64 Linux? | Phase 2 | **passed** (2026-11-24): offline to the title screen; logged in by the human to the toon selection screen with dynarec and interpreter | offline (network off, placeholder cookie): window, GLX context, OpenAL, fonts, title screen at ~68 fps (llvmpipe) with the dynarec. Toon selection needs the human's login: `docs/recon/human-run.md`. `docs/recon/engine-91bff107.md` §3–4 |
 | G3 | Console gives enough memory, JIT regions, GL, sockets, keyboard applet? | Phase 1 | open | — |
 | G4 | Python 3.12 with `cryptography` and `requests` runs on gx on the console? | Phase 4 | open | — |
 | G5 | Box64 interpreter runs real x86-64 programs on gx with no signals? | Phase 7 | open | — |
@@ -21,7 +21,7 @@ Last updated: 2026-11-24 (Phase 2).
 |---|---|---|---|
 | 0 | Workspace, toolchain and repository | **done** (2026-11-24) | merged in adobro020/ttr-nx2#1; see below |
 | 1 | Hardware probes (G3) | not started | |
-| 2 | Reference baselines (G1, G2) | **done offline**; human run pending | see below |
+| 2 | Reference baselines (G1, G2) | **done** (human runs 2026-11-24) | see below; memory samples of the logged-in runs not taken |
 | 3 | gx runtime | not started | |
 | 4 | Python guest (G4) | not started | |
 | 5 | Launcher adapter | not started | |
@@ -66,7 +66,7 @@ No hardware is needed for Phase 0. Optional smoke test: copy
 | Recon answers ELF type, load addresses, needed libraries, imported symbol counts per library, with output quoted | **done** | `docs/recon/engine-91bff107.md` §2–3; names in `engine-91bff107-imports.txt` |
 | G1 verdict with `readelf -h` / `readelf -l` lines | **done: passed** | engine doc §2 |
 | Syscall, signal, GL and audio facts from a run that reached the engine's own window | **done offline; in-game items pending human** | engine doc §4–5 (runs reached the title screen) |
-| G2 verdict or "pending human run" with the run sheet ready | **passed to the title screen; logged-in part pending human** | `docs/recon/human-run.md`, `make human-run` |
+| G2 verdict or "pending human run" with the run sheet ready | **done: passed** | offline to the title screen; human runs reached `AvatarChooser.enter` (toon selection) in both modes and exited normally; engine doc §4, "Logged-in runs" |
 | CI game-file check passes: nothing from `ref/` tracked | **done locally** | `python3 tools/guardrails/check.py --all` → `guardrails: ok`; `git check-ignore -v ref/game/TTREngine` → `.gitignore:16:ref/`. CI run: on the PR |
 
 Pending human (Phase 2): the logged-in runs in `docs/recon/human-run.md`
@@ -144,7 +144,22 @@ Deviations from the phase prompt, with reasons:
    errno; then the same through Box64 with an x86-64 test program (Phase 7
    once Box64 runs on gx). The result settles whether this question needs
    a decision.
-7. **Human run.** `docs/recon/human-run.md`: two logins with your own
-   account in the bench container (about 20 minutes). Closes G2.
+7. **Human run (done 2026-11-24).** Both modes reached the toon selection
+   screen. The first attempt used `STRACE=1` and exited at the engine's
+   `ptrace` check; logged-in runs now refuse strace. Still missing: your
+   notes on how each run felt, and memory samples (the sampler was broken;
+   fixed, not re-run).
 8. **Colima stopped once on its own** during Phase 2 (between runs);
    `colima start --vz-rosetta` brought it back with no loss.
+9. **The engine logs a login token (new, human runs).** On login the
+   engine writes `Successful login: <token>` to its own log in the install
+   directory. The client may not be changed (rule 2), and secrets must not
+   reach a file (rule 4). On the console that directory is on the SD card,
+   which any homebrew can read. Options: put the engine's `logs/` on a
+   tmpfs inside LKL so it never reaches the card (recommended: it also
+   survives a silent crash, C1, which an exit-time scrub would not); or
+   scrub the file on exit; or ask TTR. Decide before Phase 9.
+10. **Heartbeats under the interpreter.** The interpreter-only run missed
+    the server's heartbeat once and reconnected; when (loading or idle) is
+    unknown. Phase 7's console interpreter will be slower still; plan for
+    it.

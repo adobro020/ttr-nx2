@@ -133,7 +133,8 @@ recon-run: image-bench box64-bench
 	$(DOCKER_RUN) --network none $(RECON_ENV) $(BENCH_IMAGE) tools/ref/run-engine.sh $(or $(RUN),nologin)
 
 # The human's logged-in run (docs/recon/human-run.md): interactive, network
-# on, VNC on the Mac's loopback. MODE=dynarec|interp, STRACE=1 for counts.
+# on, VNC on the Mac's loopback. MODE=dynarec|interp. (No strace: the engine
+# exits under a tracer; see docs/recon/human-run.md.)
 human-run: image-bench box64-bench
 	$(DOCKER) run --rm -it --user "$$(id -u):$$(id -g)" -v "$(ROOT):/work" -w /work \
 	  -p 127.0.0.1:5900:5900 $(BENCH_IMAGE) \
