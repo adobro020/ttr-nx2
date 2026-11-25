@@ -179,6 +179,44 @@ from llvmpipe at this light screen; the in-game interpreter baseline needs
 the human run (`make human-run MODE=interp`). Phase 10's ≥ 10× target should
 be measured in-game, not here.
 
+### Logged-in runs (the human, 2026-11-24)
+
+Two logins by the human with their own account through `make human-run`
+(`docs/recon/human-run.md`): the unmodified launcher, then stock Box64
+v0.4.4 running the engine, Mesa llvmpipe in Xvfb, no strace. Source:
+`build/human-run/<mode>/` on the development Mac (git-ignored; to be
+deleted once read).
+
+| | Dynarec (`MODE=dynarec`) | Interpreter (`MODE=interp`) |
+|---|---|---|
+| login to TTR's game server | `Successfully connected`, `Successful login` | same |
+| toon selection screen (`AvatarChooser.enter` in the engine log) | reached | reached |
+| connection | stable | **lost once**: `Last heartbeat sent from client was sent 6.0383 seconds ago`, then `Lost connection to server`; the engine reconnected (`Successful reconnection`) and returned to the toon selection screen |
+| exit | `Exiting cleanly`, `Normal exit.` (game's own Quit) | same |
+| length of the session (fps samples, one per second) | 231 s | 745 s |
+| fps, first 10 s | 6.5 | 2.8 |
+| fps, last 60 s (toon selection screen) | avg 35.7, min 0.8 | avg 19.4, min 0.3 |
+| fps, whole run | avg 39.1, max 68.3 | avg 39.2, max 100.4 |
+| 30 s averages | 41 32 47 44 37 41 39 29 | 6 23 18 29 15 21 22 25 17 24 13 25 15 26 25 76 81 84 89 91 89 90 34 25 15 |
+
+- **G2 passes logged in, in both modes.** Unmodified engine and data, stock
+  Box64, from login to the toon selection screen and a clean exit.
+- **The interpreter is slow enough to miss the server's heartbeat.** The
+  client went about 6 s without sending one while loading, and the server
+  dropped the connection; the engine recovered by itself. An
+  interpreter-only build on the console (Phase 7) will hit this unless the
+  engine's network thread keeps running while it loads.
+- The 80–90 fps stretch in the interpreter run lines up with the lost
+  connection and reconnect; it is probably a light dialog screen. That is
+  an inference: the logs have no timestamps.
+- Not measured: memory and thread samples. `samples.txt` stayed empty in
+  both runs because `human_run.py` replaces `subprocess.run` to catch the
+  game start, and its sampler used `subprocess.run` to find the engine.
+  Fixed (the sampler reads `/proc`); not re-run.
+- The frame rate at the toon selection screen mostly measures llvmpipe
+  (software rendering), as at the title screen; the per-frame cost of
+  emulation is still not separated.
+
 ## 5. Dependency list for Phases 7–9
 
 From `strace -f` of the Box64 process (host arm64 syscalls — what gx must
@@ -301,3 +339,11 @@ times in 75 s), `logs/ttr-<date>_<time>_<n>.log`, `.crashreport` (empty),
 `tempfile` in `/tmp`. The placeholder cookie value was found in **none** of
 the engine's output or written files in 12 runs (`placeholder-cookie-found-in.txt`).
 The engine prints `Using gameServer from launcher: <TTR_GAMESERVER>`.
+**The engine writes a login token to its own log.** When it logs in, the
+engine's log line `Successful login: <token>` (in
+`logs/ttr-<date>_<time>_<n>.log` in the install directory and on stdout)
+carries a long server-issued token. It is not the play cookie, so the
+cookie scrub missed it in the first human runs; it was redacted by hand
+and `human_run.py` now scrubs it by pattern. On the console the install
+directory is on the SD card (`sdmc:/switch/ttr-nx2/game/`), so this needs a
+design decision under rule 4 (STATUS open question 9).

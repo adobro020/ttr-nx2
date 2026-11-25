@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import os
 import shutil
 import subprocess
@@ -42,6 +43,20 @@ BOX64 = ROOT / "build" / "box64-bench" / "box64"
 REDACTED = b"[REDACTED-COOKIE]"
 
 
+def newest_engine_pid() -> int | None:
+    """The newest process whose name is TTREngine, read from /proc."""
+    best = None
+    for entry in Path("/proc").iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            if (entry / "comm").read_text().strip() == "TTREngine":
+                best = max(best or 0, int(entry.name))
+        except OSError:
+            continue
+    return best
+
+
 def sample(pid_holder: dict[str, int], out: Path, stop: threading.Event) -> None:
     clk = os.sysconf("SC_CLK_TCK")
     start = time.monotonic()
@@ -52,9 +67,10 @@ def sample(pid_holder: dict[str, int], out: Path, stop: threading.Event) -> None
             if not pid:
                 continue
             try:
-                found = subprocess.run(["pgrep", "-n", "-x", "TTREngine"],
-                                       capture_output=True, text=True).stdout.strip()
-                pid = int(found) if found else pid
+                # Not subprocess/pgrep: main() replaces subprocess.run with
+                # start_engine, which made every sample fail in the first
+                # human runs. Box64 renames its process to TTREngine.
+                pid = newest_engine_pid() or pid
                 status = Path(f"/proc/{pid}/status").read_text()
                 stat = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()
             except (OSError, ValueError):
@@ -66,19 +82,30 @@ def sample(pid_holder: dict[str, int], out: Path, stop: threading.Event) -> None
             f.flush()
 
 
+# The engine's own log prints a login token after "Successful login: "
+# (seen in the first human runs). It is not the play cookie, so it is
+# scrubbed by pattern (CLAUDE.md rule 4).
+LOGIN_TOKEN_RE = re.compile(rb"(Successful login: )(?!\[REDACTED)\S+")
+REDACTED_TOKEN = rb"\1[REDACTED-LOGIN-TOKEN]"
+
+
 def scrub(directory: Path, secret: str) -> int:
-    """Replace the cookie in every file under ``directory``; return the count."""
-    if not secret:
-        return 0
-    needle = secret.encode()
+    """Redact the cookie and the engine's login token under ``directory``.
+
+    Returns the number of replacements made.
+    """
+    needle = secret.encode() if secret else b""
     total = 0
     for path in directory.rglob("*"):
         if path.is_file() and not path.is_symlink():
             data = path.read_bytes()
-            n = data.count(needle)
+            n = data.count(needle) if needle else 0
             if n:
-                path.write_bytes(data.replace(needle, REDACTED))
-                total += n
+                data = data.replace(needle, REDACTED)
+            data, k = LOGIN_TOKEN_RE.subn(REDACTED_TOKEN, data)
+            if n or k:
+                path.write_bytes(data)
+                total += n + k
     return total
 
 
@@ -174,7 +201,7 @@ def main() -> int:
         n = scrub(out, cookie)
         n += scrub(game, cookie)
         cookie = ""
-        print(f"human-run: replaced the play cookie {n} time(s) in the output; "
+        print(f"human-run: redacted the play cookie and login token {n} time(s) in the output; "
               f"files are in build/human-run/{args.mode}/", flush=True)
         shutil.rmtree(home, ignore_errors=True)
     return 0
