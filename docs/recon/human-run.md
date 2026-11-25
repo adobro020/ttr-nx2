@@ -13,7 +13,8 @@ cost there. Results close gate G2.
 
 `make human-run` starts the bench container (`docker/bench-arm64`) with
 networking on and opens a virtual screen you watch over VNC on your Mac's
-loopback (`localhost:5900`, not reachable from other machines). Inside it,
+loopback (`localhost:5900`, not reachable from other machines, with a
+throwaway password printed in Terminal). Inside it,
 `tools/ref/human_run.py` runs the **unmodified** Simple TTR Launcher 4.0:
 
 - account storage and the OS keyring are **off**: you type your username and
@@ -50,8 +51,10 @@ This is one normal login by you, as with the launcher on a desktop.
 
    (`STRACE=1` adds syscall **counts** only: no arguments, no environment.)
 2. In Finder choose **Go → Connect to Server…**, enter
-   `vnc://localhost:5900`, and connect (no password; it only listens on this
-   Mac). A black screen is normal until the game starts.
+   `vnc://localhost:5900`, and connect. Screen Sharing asks for a password:
+   use the one Terminal printed (`Screen Sharing password for this run: …`).
+   It is new each run, only works on this Mac, and is **not** your TTR
+   password. A black screen is normal until the game starts.
 3. Back in Terminal, the launcher asks `Enter username:` and
    `Enter password:` (masked). If your account uses two-factor or ToonGuard,
    it shows TTR's message and asks `Enter token:`. If you are queued it
