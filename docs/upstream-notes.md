@@ -140,6 +140,11 @@ What was relied on:
   `BOX64_*` ones only, never other values. The version banner shows the
   superproject's commit because the git call runs in our build directory
   (ADR 0006).
+- **Chromium NX `8652bc7` (v0.2.0) `gx/gsys.c`**: there is no `ptrace`
+  case; syscalls gx does not handle fall through to
+  `return lkl_syscall(nr, params);` (line 693), so the engine's
+  `PTRACE_TRACEME` would be answered by LKL. LKL's answer is untested
+  (STATUS open question 6).
 - **Mesa (Debian bookworm snapshot `20261120T000000Z`)**: `GALLIUM_HUD=fps`
   with `GALLIUM_HUD_DUMP_DIR` writes one frames-per-second value per period
   to a file, used for frame rates under llvmpipe.

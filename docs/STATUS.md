@@ -126,13 +126,24 @@ Deviations from the phase prompt, with reasons:
    gained the Homebrew plugin path. Backups end in `.bak-ttrnx2`.
 6. **`PTRACE_TRACEME` on the console (new, Phase 2).** The engine calls
    `ptrace(PTRACE_TRACEME)` once at start-up and exits if it fails; on
-   normal Linux the launcher becomes its tracer. gx has no ptrace, so gx (or
-   Box64) must answer this call with success for the game to run at all.
-   That is answering an anti-debugging check the TTR team put in the client.
-   It changes nothing on disk and adds no debugging, but it belongs with the
-   G8 question to the TTR team. Recommendation: implement it in gx as
-   "PTRACE_TRACEME succeeds, no tracer exists" (the honest state of a
-   process nobody traces), and mention it when contacting TTR.
+   normal Linux the launcher becomes its tracer. On the console the call
+   goes through Box64 (x86-64 → aarch64 syscall translation; its ptrace
+   handling is not yet checked) to gx, which has no ptrace case of its own
+   and forwards it to LKL (`gx/gsys.c` line 693 at chromium-nx v0.2.0,
+   `return lkl_syscall(nr, params);`). What LKL answers (0, `-EPERM` or
+   `-ENOSYS`) is **untested**. A decision is needed only if it is not 0:
+   then gx (or Box64) would have to answer with success, i.e. answer an
+   anti-debugging check the TTR team put in the client. Either way the check
+   belongs with the G8 conversation with the TTR team. If a decision is
+   needed, the recommendation stays: "PTRACE_TRACEME succeeds, no tracer
+   exists" (the honest state of a process nobody traces), mentioned when
+   contacting TTR.
+   **Phase 3 follow-up (bench test):** on the PC bench, gx + LKL in plain
+   and nx2-like mode, run a tiny aarch64 program that calls
+   `ptrace(PTRACE_TRACEME, 0, 0, 0)` and record the return value and
+   errno; then the same through Box64 with an x86-64 test program (Phase 7
+   once Box64 runs on gx). The result settles whether this question needs
+   a decision.
 7. **Human run.** `docs/recon/human-run.md`: two logins with your own
    account in the bench container (about 20 minutes). Closes G2.
 8. **Colima stopped once on its own** during Phase 2 (between runs);

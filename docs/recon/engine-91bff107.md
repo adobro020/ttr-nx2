@@ -209,8 +209,16 @@ Notes for gx:
   under strace, then `exit_group(1)` 0.5 s later). With the call answered 0
   it runs normally. On ordinary Linux it succeeds and makes the parent (the
   launcher) its tracer, which is also why nothing can attach to a running
-  engine (`TracerPid` = parent). gx has no ptrace (C7/C8); it must answer
-  this call itself. **Decision for the human, see STATUS.**
+  engine (`TracerPid` = parent). On the console the call takes this path:
+  Box64 translates the engine's x86-64 syscall to aarch64 (not yet checked
+  how it handles ptrace), then gx, which has no ptrace case of its own and
+  forwards unhandled syscalls to LKL (`return lkl_syscall(nr, params);`,
+  `gx/gsys.c` line 693 at chromium-nx v0.2.0). Whether LKL answers 0,
+  `-EPERM` or `-ENOSYS` is **untested**: it depends on whether ptrace is
+  built into LKL and what LKL treats as the calling task's parent. A
+  decision is needed only if the answer is not 0; either way this is TTR's
+  anti-debugging check and belongs with the G8 conversation. See STATUS
+  open question 6 (and the Phase 3 bench test listed there).
 - `execve`, `wait4`, `clone(CLONE_VM|CLONE_VFORK)`: **Box64 itself** runs
   `sh -c lscpu` at start-up (popen) to name the CPU. Not possible under gx
   (C7); Phase 7 must make this fail cleanly or patch it out.
