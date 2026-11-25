@@ -193,7 +193,7 @@ deleted once read).
 | toon selection screen (`AvatarChooser.enter` in the engine log) | reached | reached |
 | connection | stable | **lost once**: `Last heartbeat sent from client was sent 6.0383 seconds ago`, then `Lost connection to server`; the engine reconnected (`Successful reconnection`) and returned to the toon selection screen |
 | exit | `Exiting cleanly`, `Normal exit.` (game's own Quit) | same |
-| length of the session (fps samples, one per second) | 231 s | 745 s |
+| length of the session (fps samples, one per second) | 231 s | 745 s (both left open longer than the 60 s asked for, so these are not times to reach the screen) |
 | fps, first 10 s | 6.5 | 2.8 |
 | fps, last 60 s (toon selection screen) | avg 35.7, min 0.8 | avg 19.4, min 0.3 |
 | fps, whole run | avg 39.1, max 68.3 | avg 39.2, max 100.4 |
@@ -201,14 +201,18 @@ deleted once read).
 
 - **G2 passes logged in, in both modes.** Unmodified engine and data, stock
   Box64, from login to the toon selection screen and a clean exit.
-- **The interpreter is slow enough to miss the server's heartbeat.** The
-  client went about 6 s without sending one while loading, and the server
-  dropped the connection; the engine recovered by itself. An
-  interpreter-only build on the console (Phase 7) will hit this unless the
-  engine's network thread keeps running while it loads.
-- The 80–90 fps stretch in the interpreter run lines up with the lost
-  connection and reconnect; it is probably a light dialog screen. That is
-  an inference: the logs have no timestamps.
+- **The interpreter missed the server's heartbeat once.** The client went
+  about 6 s without sending one and the server dropped the connection; the
+  engine reconnected by itself. When it happened (while loading, or while
+  waiting at the toon selection screen) is not known: the logs have no
+  timestamps. Either way an interpreter-only build on the console
+  (Phase 7), which will be slower, must expect it.
+- The 80–90 fps stretch near the end of the interpreter run is probably
+  the lost-connection dialog or the idle toon selection screen; without
+  timestamps it cannot be tied to either.
+- Time from login to the toon selection screen was not measured (the
+  sessions were left open longer than needed and the logs have no
+  timestamps). A later run can add timestamps to `engine.log`.
 - Not measured: memory and thread samples. `samples.txt` stayed empty in
   both runs because `human_run.py` replaces `subprocess.run` to catch the
   game start, and its sampler used `subprocess.run` to find the engine.

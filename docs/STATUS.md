@@ -160,5 +160,6 @@ Deviations from the phase prompt, with reasons:
    survives a silent crash, C1, which an exit-time scrub would not); or
    scrub the file on exit; or ask TTR. Decide before Phase 9.
 10. **Heartbeats under the interpreter.** The interpreter-only run missed
-    the server's heartbeat once while loading and reconnected. Phase 7's
-    console interpreter will be slower still; plan for it.
+    the server's heartbeat once and reconnected; when (loading or idle) is
+    unknown. Phase 7's console interpreter will be slower still; plan for
+    it.
