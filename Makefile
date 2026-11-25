@@ -24,13 +24,17 @@ HELLO_DIR := tests/toolchain/hello
 
 .PHONY: help doctor hooks reference images image-devkit image-bench image-ref \
         hello nro bench test test-nx2like rootfs deploy logs \
-        guardrails lint clean
+        guardrails lint clean venv fetch-game box64-bench recon-static recon-run human-run
 
 help:
 	@echo "make doctor        check this machine (CI=1 for the CI variant)"
 	@echo "make hooks         install the guard-rail pre-commit hook"
 	@echo "make hello         build build/hello.nro in the devkit container"
-	@echo "make test          unit tests (macOS tier)"
+	@echo "make test          unit tests and launcher contract suite (macOS tier)"
+	@echo "make fetch-game    download TTR's Linux files into ref/game (asks TTR's CDN)"
+	@echo "make recon-static  ELF facts about ref/game into build/recon"
+	@echo "make box64-bench   stock Box64 for the arm64 bench"
+	@echo "make recon-run     TTREngine under Box64 + Xvfb, no login (RUN=name)"
 	@echo "make lint          shellcheck and Python compile checks"
 	@echo "make guardrails    game-file / launcher-pin / secret checks over the tree"
 	@echo "make images        build all three containers"
@@ -75,16 +79,65 @@ hello: image-devkit
 	@echo "hello: build/hello.nro OK"
 
 # --- tests --------------------------------------------------------------------
-test:
-	$(PYTHON) -m unittest discover -s tests/unit -t . -v
+# Python 3.12 venv with the launcher's packages and pytest, pinned in
+# tests/requirements.txt. Rebuilt when that file changes.
+VENV := .venv
+$(VENV)/.stamp: tests/requirements.txt
+	$(PYTHON) -m venv $(VENV)
+	$(VENV)/bin/python -m pip install -q --upgrade pip
+	$(VENV)/bin/python -m pip install -q -r tests/requirements.txt
+	@touch $@
+venv: $(VENV)/.stamp
+
+# Unit tests and the launcher contract suite (tests/launcher, Phase 2), then
+# proof that the run left the launcher submodule untouched (rule 3).
+test: venv
+	$(VENV)/bin/python -m pytest -p no:cacheprovider tests/unit tests/launcher
+	@git -C third_party/Simple-TTR-Launcher status --porcelain | \
+	  { ! grep . ; } || { echo "test: launcher submodule is not clean" >&2; exit 1; }
+	@echo "test: third_party/Simple-TTR-Launcher clean after the run"
 
 guardrails:
 	python3 tools/guardrails/check.py --all
 	gitleaks git --redact --no-banner --config .gitleaks.toml .
 
 lint:
-	shellcheck tools/*.sh tools/github/*.sh .githooks/pre-commit
-	$(PYTHON) -m py_compile tools/guardrails/check.py tests/unit/*.py
+	shellcheck tools/*.sh tools/github/*.sh tools/ref/*.sh .githooks/pre-commit
+	$(PYTHON) -m py_compile tools/guardrails/check.py tests/unit/*.py \
+	  tests/launcher/*.py tools/fake_ttr_api/*.py tools/fetch_game_files.py \
+	  tools/ref/*.py
+	@cmp -s tests/requirements.txt docker/bench-arm64/requirements.txt || \
+	  { echo "lint: docker/bench-arm64/requirements.txt differs from tests/requirements.txt" >&2; exit 1; }
+
+# --- Phase 2: reference baselines (docs/recon/) --------------------------------
+# Downloads TTR's Linux files into ref/game/ (git-ignored) with the launcher's
+# own patcher. Talks to TTR's servers: run rarely (CLAUDE.md rule 5).
+fetch-game: image-bench
+	$(DOCKER_RUN) $(BENCH_IMAGE) python3.12 tools/fetch_game_files.py --dest ref/game
+
+# Stock Box64 at the pinned tag, generic ARM64, into build/box64-bench/.
+box64-bench: image-bench
+	$(DOCKER_RUN) $(BENCH_IMAGE) tools/ref/build-box64.sh
+
+# Static facts about TTREngine and its libraries (x86-64 binutils).
+recon-static: image-ref
+	$(DOCKER_RUN) $(REF_IMAGE) tools/ref/recon-static.sh ref/game build/recon
+
+# TTREngine under stock Box64 with Xvfb, no credentials, network off
+# (RUN=name; knobs RUN_SECONDS STRACE TRACEME_OK APITRACE PANDA_DEBUG DLSYM_LOG
+# GLVER ALSOFT_LOGLEVEL DYNAREC
+# FAKE_SERVER HUD BOX64_LOG,
+# see tools/ref/run-engine.sh).
+RECON_ENV := $(foreach v,RUN_SECONDS STRACE TRACEME_OK APITRACE PANDA_DEBUG DLSYM_LOG GLVER ALSOFT_LOGLEVEL DYNAREC FAKE_SERVER HUD BOX64_LOG,$(if $($(v)),-e $(v)=$($(v))))
+recon-run: image-bench box64-bench
+	$(DOCKER_RUN) --network none $(RECON_ENV) $(BENCH_IMAGE) tools/ref/run-engine.sh $(or $(RUN),nologin)
+
+# The human's logged-in run (docs/recon/human-run.md): interactive, network
+# on, VNC on the Mac's loopback. MODE=dynarec|interp, STRACE=1 for counts.
+human-run: image-bench box64-bench
+	$(DOCKER) run --rm -it --user "$$(id -u):$$(id -g)" -v "$(ROOT):/work" -w /work \
+	  -p 127.0.0.1:5900:5900 $(BENCH_IMAGE) \
+	  tools/ref/human-run.sh $(or $(MODE),dynarec) $(if $(STRACE),--strace)
 
 # --- later phases ---------------------------------------------------------------
 nro bench test-nx2like rootfs deploy logs:

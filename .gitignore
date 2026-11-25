@@ -13,7 +13,7 @@ launcher.json
 *.img
 logs/
 cache/
-ref/
+/ref/
 
 # ---- Build output ----
 /build/

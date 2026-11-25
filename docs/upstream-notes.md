@@ -103,3 +103,48 @@ without touching devkitPro's rolling repositories.
   `padUpdate`, `padGetButtonsDown`, `appletMainLoop`, `consoleUpdate`,
   `consoleExit`) and `ARCH := $(SWITCH2_CPU) -mtp=soft -fPIE`. The hello
   program built with these, unchanged, under `-Werror`.
+
+### Phase 2 (2026-11-24)
+
+New upstreams read or used:
+
+| Name | Upstream | Version / commit | Licence | Used for |
+|---|---|---|---|---|
+| TTR API docs | ToontownRewritten/api-doc (master) | `e18126c7909964f33d0da3d8b5b66e4b577f65f9` (2025-09-19) | none stated | `login.md`: the fake API's login responses |
+| python-build-standalone | astral-sh/python-build-standalone | release `20261110`, `cpython-3.12.16+20261110-aarch64-unknown-linux-gnu-install_only.tar.gz`, SHA-256 `4792f81750282597fb2a3389fe18b945ed2ba6aad5e45ad406d122c58cb33081` | PSF + others (in tarball) | CPython 3.12 in `docker/bench-arm64` (ADR 0006) |
+| PyPI packages | see `tests/requirements.txt` | bsdiff4 1.4.4, cryptography 50.0.2, keyring 25.7.0, pwinput 1.0.3, requests 2.34.2, tqdm 4.70.1, urllib3 2.8.0, pytest 9.2.0, … | various (BSD/MIT/Apache) | launcher contract tests; launcher on the bench |
+
+What was relied on:
+
+- **Simple TTR Launcher `af80b26` (4.0)**: read in full (`main.py`,
+  `launcher.py`, `patcher.py`, `encrypt.py`, `helper.py`). Everything the
+  adapter depends on is in `docs/recon/launcher-contract.md` with line
+  numbers. `master` (5 commits ahead, 2026-09-10..13) rewrites formatting in
+  every module, changes the patch progress display and drops the `mirrors`
+  parameter of the download helpers; not adopted (see STATUS open question 4).
+- **api-doc `login.md` at `e18126c`**: the four responses, the
+  partial-request fields `appToken`/`authToken`, the queued-request field
+  `queueToken`, all values strings, the manifest path appended to
+  `https://cdn.toontownrewritten.com`. The document's example of a follow-up
+  delayed response omits `queueToken`; the launcher reads it on every
+  delayed response, so the fake always sends it.
+- **The mirrors endpoint** (`https://www.toontownrewritten.com/api/mirrors`) is
+  not in api-doc; its shape (JSON list of base URLs) comes from `patcher.py`
+  (`__get_mirrors`, `urljoin(mirror, name)`).
+- **Box64 `2f130fa` (v0.4.4)**: `docs/COMPILE.md` (generic ARM64:
+  `-D ARM_DYNAREC=ON`, `CMAKE_BUILD_TYPE=RelWithDebInfo`), `CMakeLists.txt`
+  (`ARM64` option, install rules: `box64.box64rc` to `/etc`, x86-64 helper
+  libraries to `/usr/lib/box64-x86_64-linux-gnu`), `docs/USAGE.md`
+  (`BOX64_RCFILE`, `BOX64_LD_LIBRARY_PATH`, `BOX64_LOG`, `BOX64_DYNAREC`).
+  Observed: `BOX64_LOG=1` prints the number of environment variables and the
+  `BOX64_*` ones only, never other values. The version banner shows the
+  superproject's commit because the git call runs in our build directory
+  (ADR 0006).
+- **Chromium NX `8652bc7` (v0.2.0) `gx/gsys.c`**: there is no `ptrace`
+  case; syscalls gx does not handle fall through to
+  `return lkl_syscall(nr, params);` (line 693), so the engine's
+  `PTRACE_TRACEME` would be answered by LKL. LKL's answer is untested
+  (STATUS open question 6).
+- **Mesa (Debian bookworm snapshot `20261120T000000Z`)**: `GALLIUM_HUD=fps`
+  with `GALLIUM_HUD_DUMP_DIR` writes one frames-per-second value per period
+  to a file, used for frame rates under llvmpipe.
