@@ -150,7 +150,9 @@ launcher_pid=$!
             now=$(date +%s.%N)
             printf '%.0f %s %s %s %.2f %.2f\n' "$(echo "$now - $start" | bc)" \
                 "$thr" "$rss" "$hwm" "$(echo "$ut / $clk" | bc -l)" "$(echo "$st / $clk" | bc -l)"
-            [ -r "/proc/$pid/maps" ] && cp "/proc/$pid/maps" "$out/maps-last.txt" 2>/dev/null || true
+            if [ -r "/proc/$pid/maps" ]; then
+                cp "/proc/$pid/maps" "$out/maps-last.txt" 2>/dev/null || true
+            fi
         fi
         sleep 5
     done
@@ -202,7 +204,7 @@ printf 'state_at_stop=%s exit_status=%s wall_s=%.1f\n' "$status" "$rc" \
 diff "$out/files-before.txt" "$out/files-after.txt" | grep -E '^[<>]' > "$out/files-changed.txt" || true
 mkdir -p "$out/game-files"
 for f in logs settings.json .crashreport; do
-    [ -e "$game/$f" ] && cp -a "$game/$f" "$out/game-files/" || true
+    if [ -e "$game/$f" ]; then cp -a "$game/$f" "$out/game-files/"; fi
 done
 if [ "$fake_server" = 1 ]; then
     # Does the engine write the cookie anywhere? (placeholder value only)
