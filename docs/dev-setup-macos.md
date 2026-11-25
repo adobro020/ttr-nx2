@@ -91,7 +91,7 @@ colima start --vz-rosetta
 ```
 
 (`colima restart` after editing the mounts.) The VM has 6 CPUs, 6 GiB memory
-and a 24 GiB disk. Docker Desktop or OrbStack work too; make sure the project
+and a 60 GiB disk (`colima list` shows it). Docker Desktop or OrbStack work too; make sure the project
 folder is in their file-sharing list. `make doctor` checks it
 (`docker-mount`).
 

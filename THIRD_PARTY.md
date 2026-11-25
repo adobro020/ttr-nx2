@@ -23,6 +23,9 @@ in a release zip.
 | ounce-devkit | https://github.com/ouncebrew/ounce-devkit | MIT | main @ 5e95759 | Dockerfile followed |
 | Debian 12 | `debian:12` image + snapshot.debian.org 2026-11-20 | various DFSG | bookworm | bench and reference containers |
 | gitleaks | https://github.com/gitleaks/gitleaks | MIT | 8.30.1 | secret scanning in hook and CI |
+| CPython (python-build-standalone) | https://github.com/astral-sh/python-build-standalone | PSF-2.0 and others (in the tarball) | 3.12.16, release 20261110 | launcher on the arm64 bench (Phase 2) |
+| Python packages for tests | PyPI, pinned in `tests/requirements.txt` | MIT / BSD / Apache-2.0 (each package) | see file | launcher contract tests, bench launcher |
+| Mesa, Xvfb, strace, x11vnc, OpenAL Soft and X11 libraries | Debian 12 snapshot (above) | MIT / GPL-2.0 / LGPL | bookworm | reference runs of TTREngine (Phase 2) |
 
 ## Read for reference only (`third_party/reference/`, not in git, not shipped)
 
